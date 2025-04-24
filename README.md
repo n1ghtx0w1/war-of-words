@@ -1,10 +1,8 @@
-# 👋 HeadGames War of Words
+# ⚔️ HeadGames War of Words 🛡️
 
 ![HeadGames War of Words](/assets/images/bg.png)
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
-
-![HeadGames War of Words](/assets/images/bg.png)
 
 ## Get started
 
