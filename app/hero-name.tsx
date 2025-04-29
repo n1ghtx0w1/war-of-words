@@ -1,17 +1,28 @@
+// 📦 Core imports for React Native components
 import { View, Text, TextInput, Pressable, StyleSheet, Alert, Image } from "react-native";
 import { useState } from "react";
+
+// 🚦 Navigation hooks
 import { useRouter, useLocalSearchParams } from "expo-router";
+
+// 🌟 Reusable floating menu with logout/music controls
 import FloatingMenu from "../components/FloatingMenu";
 
+// 🔐 Supabase client for auth/database
+import { supabase } from "../lib/supabase";
 
+// 🎲 Utility for generating base stats by hero type
+import { getHeroStats } from "../lib/heroStats";
+
+// 🛡️ Main screen for naming and saving the new hero
 export default function NameHeroScreen() {
   const router = useRouter();
   const { heroId } = useLocalSearchParams();
 
-  const [name, setName] = useState("");
+  const [name, setName] = useState(""); // Hero name input
 
-  // Hero image map
-  const heroImages: Record<string, any> = {
+  // 🖼️ Map hero types to images
+  const heroImages: Record<string, ReturnType<typeof require>> = { 
     "light_male_melee": require("../assets/images/heroes/light_male_melee.png"),
     "light_male_archer": require("../assets/images/heroes/light_male_archer.png"),
     "light_male_cavalry": require("../assets/images/heroes/light_male_cavalry.png"),
@@ -28,7 +39,8 @@ export default function NameHeroScreen() {
 
   const imageSource = heroId && heroImages[heroId as string];
 
-  const handleConfirm = () => {
+  // 🚀 Confirm hero creation and save to Supabase
+  const handleConfirm = async () => {
     if (!name.trim()) {
       Alert.alert("Invalid Name", "Please enter a name for your hero.");
       return;
@@ -39,25 +51,67 @@ export default function NameHeroScreen() {
       return;
     }
 
-    Alert.alert("Character Ready", `${name} the ${heroId} has been created!`);
-    // router.push("/map"); // You can navigate here next
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData?.user) {
+      Alert.alert("Error", "Could not find user session.");
+      return;
+    }
+    
+    if (!heroId) {
+      Alert.alert("Error", "Hero selection is missing.");
+      return;
+    }
+    
+    const heroStats = getHeroStats(heroId as string);
+
+    const { error } = await supabase.from("heroes").insert([
+      {
+        user_id: userData.user.id,
+        name,
+        class: heroId,
+        strength: heroStats.strength,
+        dexterity: heroStats.dexterity,
+        hp: heroStats.hp,
+        intelligence: heroStats.intelligence,
+      },
+    ]);
+
+    if (error) {
+      Alert.alert("Error", "Failed to save hero.");
+      console.error("Supabase insert error:", error.message, error.details);
+      return;
+    }
+
+    Alert.alert("Hero Created", `${name} has been created!`);
+    router.replace("/map");
   };
 
   return (
     <>
-      {/* Back button like other screens */}
+      {/* 🔙 Back button */}
       <Pressable onPress={() => router.back()} style={styles.backButton}>
         <Text style={styles.backButtonText}>🔙 Back</Text>
       </Pressable>
 
-      {/* Main content */}
+      {/* 📜 Main form */}
       <View style={styles.container}>
         <Text style={styles.title}>Name Your Hero</Text>
 
+        {/* 🖼️ Hero preview */}
         {imageSource && (
           <Image source={imageSource} style={styles.heroImage} />
         )}
 
+      {heroId && (
+      <View style={styles.statsContainer}>
+      <Text style={styles.statText}>Strength: {getHeroStats(heroId as string).strength}</Text>
+      <Text style={styles.statText}>Dexterity: {getHeroStats(heroId as string).dexterity}</Text>
+      <Text style={styles.statText}>HP: {getHeroStats(heroId as string).hp}</Text>
+      <Text style={styles.statText}>Intelligence: {getHeroStats(heroId as string).intelligence}</Text>
+      </View>
+      )}
+
+        {/* ✏️ Hero name input */}
         <TextInput
           style={styles.input}
           placeholder="Enter Hero Name"
@@ -68,16 +122,19 @@ export default function NameHeroScreen() {
           autoCapitalize="words"
         />
 
+        {/* ✅ Confirm button */}
         <Pressable style={styles.button} onPress={handleConfirm}>
           <Text style={styles.buttonText}>✅ Confirm Name</Text>
         </Pressable>
+
+        {/* 🎛️ Floating music/logout menu */}
         <FloatingMenu />
       </View>
-
     </>
   );
 }
 
+// 🎨 Stylesheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -141,4 +198,14 @@ const styles = StyleSheet.create({
     color: "#25be38",
     letterSpacing: 1,
   },
+  statsContainer: {
+    marginBottom: 20,
+    alignItems: "center",
+  },
+  statText: {
+    fontFamily: "PressStart2P",
+    fontSize: 10,
+    color: "#ccc",
+    marginVertical: 2,
+  },  
 });
