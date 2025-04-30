@@ -1,14 +1,26 @@
-// ✅ Core React Native imports
 import { View, Text, Pressable, StyleSheet } from "react-native";
-// ✅ Expo router for screen navigation
 import { useRouter } from "expo-router";
-// ✅ Floating menu component for music + logout controls
 import FloatingMenu from "../components/FloatingMenu";
+import { loadPlayerHero } from "../lib/player";
+import { Alert } from "react-native";
 
 // ✅ Main screen component for choosing between new or saved game
 export default function ChooseModeScreen() {
   const router = useRouter(); // Initialize navigation
-
+  const handleContinue = async () => {
+    try {
+      const hero = await loadPlayerHero();
+      if (hero) {
+        // TODO: Set hero in context or pass to /map
+        router.replace("/map");
+      } else {
+        Alert.alert("No Hero", "You don't have a saved hero yet.");
+      }
+    } catch (e) {
+      Alert.alert("Error", e.message || "Something went wrong.");
+    }
+  };
+  
   return (
     <>
       {/* 🔳 Main screen layout container */}
@@ -17,15 +29,15 @@ export default function ChooseModeScreen() {
         <Text style={styles.title}>Welcome Back!</Text>
         <Text style={styles.subtitle}>What would you like to do?</Text>
 
-        {/* 🆕 Start new game option */}
-        <Pressable style={styles.button} onPress={() => router.replace("/select-hero")}>
-          <Text style={styles.buttonText}>🆕 Start New Game</Text>
-        </Pressable>
+      {/* 🆕 Start new game option */}
+      <Pressable style={styles.button} onPress={() => router.replace("/select-hero")}>
+      <Text style={styles.buttonText}>🆕 Start New Game</Text>
+      </Pressable>
 
-        {/* 🔄 Continue game option */}
-        <Pressable style={styles.button} onPress={() => router.replace("/map")}>
-          <Text style={styles.buttonText}>🔄 Continue Game</Text>
-        </Pressable>
+      {/* 🔄 Continue game option */}
+      <Pressable style={styles.button} onPress={handleContinue}>
+      <Text style={styles.buttonText}>🔄 Continue Game</Text>
+      </Pressable>
 
         {/* 🎛️ Floating menu (Logout, Music, Mute) */}
         <FloatingMenu />

@@ -1,6 +1,7 @@
 // 📦 Core imports for React Native components
 import { View, Text, TextInput, Pressable, StyleSheet, Alert, Image } from "react-native";
 import { useState } from "react";
+import { useHero } from "../context/HeroContext";
 
 // 🚦 Navigation hooks
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -18,7 +19,7 @@ import { getHeroStats } from "../lib/heroStats";
 export default function NameHeroScreen() {
   const router = useRouter();
   const { heroId } = useLocalSearchParams();
-
+  const { setHero } = useHero();
   const [name, setName] = useState(""); // Hero name input
 
   // 🖼️ Map hero types to images
@@ -64,7 +65,9 @@ export default function NameHeroScreen() {
     
     const heroStats = getHeroStats(heroId as string);
 
-    const { error } = await supabase.from("heroes").insert([
+    const { data, error } = await supabase
+    .from("heroes")
+    .insert([
       {
         user_id: userData.user.id,
         name,
@@ -74,13 +77,19 @@ export default function NameHeroScreen() {
         hp: heroStats.hp,
         intelligence: heroStats.intelligence,
       },
-    ]);
+    ])
+    .select()
+    .single(); // ✅ Return inserted row
+  
 
-    if (error) {
+    if (error || !data) {
       Alert.alert("Error", "Failed to save hero.");
       console.error("Supabase insert error:", error.message, error.details);
       return;
     }
+    
+    // ✅ Set hero in global context
+    setHero(data);
 
     Alert.alert("Hero Created", `${name} has been created!`);
     router.replace("/map");

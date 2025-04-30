@@ -1,10 +1,13 @@
 // app/_layout.tsx
 import { Stack } from "expo-router";
 import FloatingMenu from "../components/FloatingMenu";
+import { HeroProvider } from "../context/HeroContext";
+import { View, StyleSheet } from "react-native";
 
 export default function Layout() {
   return (
-    <>
+    <HeroProvider>
+      <View style={styles.container}>
       {/* Navigation stack (all pages/screens) */}
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -18,6 +21,12 @@ export default function Layout() {
 
       {/* Floating menu at bottom-right (only one instance across app) */}
       <FloatingMenu />
-    </>
+      </View>
+      </HeroProvider>
   );
 }
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
