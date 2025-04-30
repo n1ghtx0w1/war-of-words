@@ -1,107 +1,104 @@
-// components/FloatingMenu.tsx
+import { View, Pressable, Text, StyleSheet, Platform } from "react-native";
+import { Audio } from "expo-av";                // 🎵 Music playback
+import { useEffect, useState } from "react";    // 🧠 React state and lifecycle
+import { useRouter } from "expo-router";        // 🚦 Navigation between screens
+import { supabase } from "../lib/supabase";     // 🔐 Supabase auth client
+import * as Haptics from "expo-haptics";        // 📳 Native haptic feedback
 
-// 📦 Import core libraries and components
-import { View, Pressable, Text, StyleSheet } from "react-native";
-import { Audio } from "expo-av"; // 🎵 Used for sound control
-import { useEffect, useState } from "react";
-import { useRouter } from "expo-router"; // 🚦 Used for navigation
-import { supabase } from "../lib/supabase"; // 🔐 Authentication service
-import * as Haptics from "expo-haptics";
-
-// 🌟 Floating menu component with music and logout controls
+// 🌟 FloatingMenu Component: Persistent bottom-right controls for music and logout
 export default function FloatingMenu() {
-    const router = useRouter(); // Used to navigate (logout)
-    const [sound, setSound] = useState<Audio.Sound | null>(null); // Music playback object
-    const [isPlaying, setIsPlaying] = useState(false); // Is music playing
-    const [isMuted, setIsMuted] = useState(false); // Is music muted  
+  const router = useRouter(); // 🌍 Routing handler
+  const [sound, setSound] = useState<Audio.Sound | null>(null); // 🔊 Audio object reference
+  const [isPlaying, setIsPlaying] = useState(false);            // 🎶 Music playing state
+  const [isMuted, setIsMuted] = useState(false);                // 🔇 Mute toggle
 
-  // 🔁 Load background music when the component mounts
+  // 🔁 Load and prepare background music on component mount
   useEffect(() => {
     const loadSound = async () => {
       const { sound: newSound } = await Audio.Sound.createAsync(
         require("../assets/music/retro_game_level_1.mp3"),
-        { isLooping: true } // Loop music indefinitely
+        { isLooping: true } // ♾️ Loop music
       );
       setSound(newSound);
     };
 
     loadSound();
 
-    // 🔄 Cleanup on unmount
+    // 🧼 Cleanup: unload sound when component is removed
     return () => {
       sound?.unloadAsync();
     };
   }, []);
 
+  // ▶️ Start background music
   const startMusic = async () => {
     if (sound && !isPlaying) {
       await sound.playAsync();
       setIsPlaying(true);
-      setIsMuted(false); // Optional: Reset muted state when started
+      setIsMuted(false); // Reset mute toggle
     }
   };
-  
-  // 🔇 Toggle music play/pause state
+
+  // 🔇 Toggle mute/unmute music
   const toggleMute = async () => {
     if (sound) {
       const status = await sound.getStatusAsync();
       if (status.isPlaying) {
-        await sound.pauseAsync(); // Pause music
+        await sound.pauseAsync();  // ⏸️ Pause
       } else {
-        await sound.playAsync();  // Resume music
+        await sound.playAsync();   // ▶️ Resume
       }
       setIsMuted(!isMuted);
     }
   };
 
-  // 🚪 Sign the user out and return to landing screen
+  // 🚪 Log out user and return to landing screen
   const logout = async () => {
-    await Haptics.selectionAsync();        // Light tap feedback
-    await supabase.auth.signOut();         // Sign out from Supabase
-    router.replace("/");                   // Navigate to landing
+    if (Platform.OS !== "web") {
+      await Haptics.selectionAsync(); // 📳 Vibration on native
+    }
+    await supabase.auth.signOut();    // 📴 Supabase session end
+    router.replace("/");              // 🔁 Redirect to login
   };
-  
-  // 🧭 Render the floating button menu in the bottom-right
+
+  // 🧭 UI layout: floating vertical button menu in bottom-right corner
   return (
     <View style={styles.menu}>
-      {/* ▶️ Start Music */}
-    <Pressable onPress={startMusic} disabled={isPlaying}>
-    <Text style={[styles.menuText, isPlaying && { opacity: 0.5 }]}>▶️</Text>
-    </Pressable>
+      {/* ▶️ Play Music Button */}
+      <Pressable onPress={startMusic} disabled={isPlaying}>
+        <Text style={[styles.menuText, isPlaying && { opacity: 0.5 }]}>▶️</Text>
+      </Pressable>
 
-
-      {/* 🔊 / 🔇 Toggle Mute */}
+      {/* 🔊 Toggle Mute Button */}
       <Pressable onPress={toggleMute}>
         <Text style={styles.menuText}>{isMuted ? "🔇" : "🔊"}</Text>
       </Pressable>
 
-      {/* 🚪 Logout */}
+      {/* 🚪 Logout Button */}
       <Pressable onPress={logout}>
         <Text style={styles.menuText}>🚪</Text>
       </Pressable>
     </View>
   );
 }
+
+// 🎨 Styling for FloatingMenu layout and icons
 const styles = StyleSheet.create({
-    // 📍 Position menu in the bottom-right
-    menu: {
-      position: "absolute",
-      bottom: 20,
-      right: 20,
-      flexDirection: "column", // Stack vertically
-      alignItems: "center",
-      gap: 12, // Space between buttons
-      zIndex: 999, // Always on top
-    },
-  
-    // 🧱 Style for each button icon
-    menuText: {
-      fontSize: 22, // Icon size
-      backgroundColor: "#222", // Dark background
-      color: "#25be38", // Neon green text
-      padding: 10,
-      borderRadius: 10,
-      fontFamily: "PressStart2P", // Retro font
-    },
-  });
-  
+  menu: {
+    position: "absolute",   // ⬇️ Fix to bottom-right
+    bottom: 20,
+    right: 20,
+    flexDirection: "column", // 🧱 Stack buttons vertically
+    alignItems: "center",
+    gap: 12,
+    zIndex: 999,             // 🧮 Stay on top
+  },
+  menuText: {
+    fontSize: 22,
+    backgroundColor: "#222",   // Dark gray
+    color: "#25be38",          // Neon green
+    padding: 10,
+    borderRadius: 10,
+    fontFamily: "PressStart2P", // Retro pixel font
+  },
+});
