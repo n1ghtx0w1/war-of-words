@@ -17,3 +17,9 @@ export const loadPlayerHero = async () => {
 
   return data;
 };
+
+// DeleteHero to free up room
+export const deleteHero = async (heroId: string) => {
+  const { error } = await supabase.from("heroes").delete().eq("id", heroId);
+  if (error) throw new Error("Failed to delete hero");
+};

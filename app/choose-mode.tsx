@@ -1,101 +1,92 @@
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, Alert } from "react-native";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import FloatingMenu from "../components/FloatingMenu";
+import { useHero } from "../context/HeroContext";
 import { loadPlayerHero } from "../lib/player";
-import { Alert } from "react-native";
 
 // ✅ Main screen component for choosing between new or saved game
 export default function ChooseModeScreen() {
-  const router = useRouter(); // Initialize navigation
+  const router = useRouter();
+  const { setHero } = useHero();        // ✅ Correct usage
+  const [loading, setLoading] = useState(false);
+
+  // 🔄 Handle continue logic
   const handleContinue = async () => {
+    setLoading(true);
     try {
       const hero = await loadPlayerHero();
       if (hero) {
-        // TODO: Set hero in context or pass to /map
-        router.replace("/map");
+        setHero(hero); // ✅ Store globally
+        router.push("/select-hero-list"); 
       } else {
         Alert.alert("No Hero", "You don't have a saved hero yet.");
       }
     } catch (e) {
       Alert.alert("Error", e.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
     }
   };
-  
+
   return (
-    <>
-      {/* 🔳 Main screen layout container */}
-      <View style={styles.container}>
-        {/* 👋 Welcome message */}
-        <Text style={styles.title}>Welcome Back!</Text>
-        <Text style={styles.subtitle}>What would you like to do?</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Welcome Back!</Text>
+      <Text style={styles.subtitle}>What would you like to do?</Text>
 
-      {/* 🆕 Start new game option */}
-      <Pressable style={styles.button} onPress={() => router.replace("/select-hero")}>
-      <Text style={styles.buttonText}>🆕 Start New Game</Text>
+      {/* 🆕 Start New Game */}
+      <Pressable style={styles.button} onPress={() => router.push("/select-hero")}>
+        <Text style={styles.buttonText}>🆕 Start New Game</Text>
       </Pressable>
 
-      {/* 🔄 Continue game option */}
-      <Pressable style={styles.button} onPress={handleContinue}>
-      <Text style={styles.buttonText}>🔄 Continue Game</Text>
+      {/* 🔄 Continue Game */}
+      <Pressable style={styles.button} onPress={handleContinue} disabled={loading}>
+        <Text style={styles.buttonText}>{loading ? "Loading..." : "🔄 Continue Game"}</Text>
       </Pressable>
 
-        {/* 🎛️ Floating menu (Logout, Music, Mute) */}
-        <FloatingMenu />
-      </View>
-    </>
+      <FloatingMenu />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-    // 🔳 Fullscreen dark container
-    container: {
-      flex: 1,
-      backgroundColor: "#1e1e2f", // Dark background
-      justifyContent: "center",   // Center vertically
-      alignItems: "center",       // Center horizontally
-      padding: 20,
-    },
-  
-    // 👋 Large title
-    title: {
-      fontFamily: "PressStart2P",
-      fontSize: 18,
-      color: "#25be38", // Neon green
-      marginBottom: 10,
-      textAlign: "center",
-    },
-  
-    // 📝 Smaller subtitle
-    subtitle: {
-      fontFamily: "PressStart2P",
-      fontSize: 10,
-      color: "#ccc",
-      marginBottom: 24,
-      textAlign: "center",
-    },
-  
-    // 🟪 Purple button styling
-    button: {
-      backgroundColor: "#4b0082",
-      paddingVertical: 12,
-      paddingHorizontal: 30,
-      borderRadius: 12,
-      marginVertical: 10,
-    },
-  
-    // 🔤 Button text style
-    buttonText: {
-      fontFamily: "PressStart2P",
-      fontSize: 10,
-      color: "#fff",
-    },
-  
-    // 🔙 (Unused here, but preserved for reuse if needed)
-    backButtonText: {
-      fontFamily: "PressStart2P",
-      fontSize: 12,
-      color: "#25be38",
-      letterSpacing: 1,
-    },
-  });
-  
+  container: {
+    flex: 1,
+    backgroundColor: "#1e1e2f",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  title: {
+    fontFamily: "PressStart2P",
+    fontSize: 18,
+    color: "#25be38",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  subtitle: {
+    fontFamily: "PressStart2P",
+    fontSize: 10,
+    color: "#ccc",
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  button: {
+    backgroundColor: "#4b0082",
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+    marginVertical: 10,
+  },
+  buttonText: {
+    fontFamily: "PressStart2P",
+    fontSize: 10,
+    color: "#fff",
+  },
+  backButtonText: {
+    fontFamily: "PressStart2P",
+    fontSize: 12,
+    color: "#25be38",
+    letterSpacing: 1,
+  },
+});

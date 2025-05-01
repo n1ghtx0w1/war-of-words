@@ -16,6 +16,8 @@ export default function Layout() {
         <Stack.Screen name="choose-mode" options={{ headerShown: false }} />
         <Stack.Screen name="select-hero" options={{ headerShown: false }} />
         <Stack.Screen name="hero-name" options={{ headerShown: false }} />
+        <Stack.Screen name="map" options={{ headerShown: false }} />
+        <Stack.Screen name="select-hero-list" options={{ headerShown: false }} />
         {/* Add more screens later */}
       </Stack>
 

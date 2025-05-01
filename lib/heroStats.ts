@@ -1,4 +1,3 @@
-// lib/heroStats.ts
 
 export function getHeroStats(heroType: string) {
     if (heroType.includes("melee")) {
